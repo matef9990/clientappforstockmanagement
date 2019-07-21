@@ -1,10 +1,14 @@
 import React, { Component } from "react";
+import { HubConnection, HubConnectionBuilder } from "@aspnet/signalr";
+
 class Market extends Component {
   state = {
     loading: false,
-    stocks: []
+    stocks: [],
+    hubConnection: null
   };
   async componentDidMount() {
+    // Get All Stocks From Database by Web Api
     await fetch("http://localhost:60713/api/stocks")
       .then(response => response.json())
       .then(json => {
@@ -13,11 +17,23 @@ class Market extends Component {
           stocks: json
         });
       });
-    // const url = "http://localhost:60713/api/stocks";
-    // const response = await fetch(url);
-    // const data = response.json();
-    // this.setState({ stocks: data });
-    // console.log(this.state.stocks);
+
+    // connect to Hub to refresh DataBase
+
+    const hubConnection = new HubConnectionBuilder()
+      .withUrl(
+        "http://localhost:60713/hubs/stocks",
+        { skipNegotiation: true },
+        { transport: Signalr.HttpTransportType.WebSockets }
+      )
+      .build();
+
+    this.setState({ hubConnection }, () => {
+      this.state.hubConnection
+        .start()
+        .then(() => console.log("SignalR Connected"))
+        .catch(err => console.log("Error in Connecting SignalR"));
+    });
   }
   render() {
     let i = 0;
