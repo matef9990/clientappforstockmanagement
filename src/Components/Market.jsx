@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { HubConnection, HubConnectionBuilder } from "@aspnet/signalr";
+import axios from "axios";
 
 class Market extends Component {
   state = {
@@ -9,30 +10,35 @@ class Market extends Component {
   };
   async componentDidMount() {
     // Get All Stocks From Database by Web Api
-    await fetch("http://localhost:60713/api/stocks")
-      .then(response => response.json())
-      .then(json => {
-        this.setState({
-          loading: true,
-          stocks: json
-        });
+
+    await axios.get("http://localhost:60713/api/stocks").then(response => {
+      this.setState({
+        loading: true,
+        stocks: response.data
       });
+    });
+
+    //Call api Interval every 10 sec
+
+    setInterval(async () => {
+      axios.patch("http://localhost:60713/api/stocks");
+    }, 10000);
 
     // connect to Hub to refresh DataBase
 
     const hubConnection = new HubConnectionBuilder()
-      .withUrl(
-        "http://localhost:60713/hubs/stocks",
-        { skipNegotiation: true },
-        { transport: Signalr.HttpTransportType.WebSockets }
-      )
+      .withUrl("http://localhost:60713/hubs/stocks")
       .build();
 
     this.setState({ hubConnection }, () => {
       this.state.hubConnection
         .start()
         .then(() => console.log("SignalR Connected"))
-        .catch(err => console.log("Error in Connecting SignalR"));
+        .catch(err => console.log("Error in Connecting SignalR" + err));
+
+      hubConnection.on("StocksList_Refreshed", () => {
+        this.refreshMarket();
+      });
     });
   }
   render() {
@@ -64,6 +70,16 @@ class Market extends Component {
         </React.Fragment>
       );
     }
+  }
+
+  async refreshMarket() {
+    await axios.get("http://localhost:60713/api/stocks").then(response => {
+      this.setState({
+        stocks: response.data
+      });
+    });
+
+    console.log("data refreshed");
   }
 }
 
