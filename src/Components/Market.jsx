@@ -41,6 +41,9 @@ class Market extends Component {
       });
     });
   }
+
+  //comoponent will not mount
+
   render() {
     let i = 0;
     if (!this.state.loading) {
