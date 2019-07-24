@@ -1,0 +1,4 @@
+{
+    "endPointUrl": "http://localhost:60713/api/stocks",
+    "signalrHubUrl": "http://localhost:60713/hubs/stocks"
+}

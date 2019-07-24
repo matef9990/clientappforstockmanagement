@@ -1,33 +1,32 @@
 import React, { Component } from "react";
 import { HubConnection, HubConnectionBuilder } from "@aspnet/signalr";
-import axios from "axios";
+import http from "../Services/httpServices";
+import config from "../config.json";
 
 class Market extends Component {
+  _isMounted = false;
   state = {
     loading: false,
     stocks: [],
     hubConnection: null
   };
   async componentDidMount() {
+    this._isMounted = true;
+
     // Get All Stocks From Database by Web Api
-
-    await axios.get("http://localhost:60713/api/stocks").then(response => {
-      this.setState({
-        loading: true,
-        stocks: response.data
+    if (this._isMounted) {
+      await http.get(config.endPointUrl).then(response => {
+        this.setState({
+          loading: true,
+          stocks: response.data
+        });
       });
-    });
-
-    //Call api Interval every 10 sec
-
-    setInterval(async () => {
-      axios.patch("http://localhost:60713/api/stocks");
-    }, 10000);
+    }
 
     // connect to Hub to refresh DataBase
 
     const hubConnection = new HubConnectionBuilder()
-      .withUrl("http://localhost:60713/hubs/stocks")
+      .withUrl(config.signalrHubUrl)
       .build();
 
     this.setState({ hubConnection }, () => {
@@ -44,14 +43,33 @@ class Market extends Component {
 
   //comoponent will not mount
 
+  componentWillUnmount() {
+    this._isMounted = false;
+  }
+
+  //do when database refreshed
+  async refreshMarket() {
+    if (this._isMounted) {
+      await http.get(config.endPointUrl).then(response => {
+        this.setState({
+          stocks: response.data
+        });
+      });
+
+      console.log("data refreshed");
+    }
+  }
+
   render() {
     let i = 0;
     if (!this.state.loading) {
-      return <div>Loading Data </div>;
+      return <div>Loading Data ... </div>;
     } else {
       return (
         <React.Fragment>
-          <h1>Market</h1>
+          <h1>
+            <span className="badge badge-light">Market</span>
+          </h1>
           <table className="table  table-bordered table-dark table-striped">
             <thead>
               <tr>
@@ -73,16 +91,6 @@ class Market extends Component {
         </React.Fragment>
       );
     }
-  }
-
-  async refreshMarket() {
-    await axios.get("http://localhost:60713/api/stocks").then(response => {
-      this.setState({
-        stocks: response.data
-      });
-    });
-
-    console.log("data refreshed");
   }
 }
 
