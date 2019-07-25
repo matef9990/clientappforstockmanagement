@@ -1,8 +1,8 @@
 import React, { Component } from "react";
 import { HubConnectionBuilder } from "@aspnet/signalr";
 import { Switch, Route, Redirect } from "react-router-dom";
+import { ToastContainer, toast, Flip } from "react-toastify";
 import Navbar from "./Components/navbar";
-import logo from "./logo.svg";
 import "./App.css";
 import Market from "./Components/market";
 import Orders from "./Components/orders";
@@ -12,23 +12,19 @@ import config from "./config.json";
 
 class App extends Component {
   state = {
-    loading: false,
+    marketLoading: false,
+    ordersLoading: false,
     stocks: [],
-    hubConnection: null
+    hubConnection: null,
+    Orders: []
   };
-  async componentDidMount() {
-    //Call api Interval every 10 sec
-
+  componentDidMount() {
     // Get All Stocks From Database by Web Api
-    await http.get(config.endPointUrl).then(response => {
-      this.setState({
-        loading: true,
-        stocks: response.data
-      });
-    });
+    this.getStocks();
+    //get all orders
 
     setInterval(async () => {
-      http.patch(config.endPointUrl);
+      http.patch(config.stocksEndPointUrl);
     }, 10000);
 
     const hubConnection = new HubConnectionBuilder()
@@ -43,22 +39,48 @@ class App extends Component {
 
       hubConnection.on("StocksList_Refreshed", () => {
         this.refreshMarket();
+        this.refreshStockPrice();
       });
     });
   }
 
-  async refreshMarket() {
-    await http.get(config.endPointUrl).then(response => {
+  //get all Orders
+  async getOrders() {
+    await http
+      .get(config.ordersEndPointUrl)
+      .then(response => {
+        this.setState({
+          ordersLoading: true,
+          orders: response.data
+        });
+      })
+      .catch(err => {
+        console.log("errors :", err);
+      });
+  }
+
+  //get All Stocks
+  async getStocks() {
+    await http.get(config.stocksEndPointUrl).then(response => {
       this.setState({
+        marketLoading: true,
         stocks: response.data
       });
+      this.getOrders();
     });
+  }
+  refreshStockPrice() {
+    this.getOrders();
+  }
 
-    console.log("data refreshed");
+  async refreshMarket() {
+    this.getStocks();
+    toast("Prices Updated", { transition: Flip, autoClose: 2000 });
   }
   render() {
     return (
       <React.Fragment>
+        <ToastContainer />
         <Navbar />
 
         <main className="container mt-5">
@@ -68,12 +90,21 @@ class App extends Component {
               render={props => (
                 <Market
                   {...props}
-                  loading={this.state.loading}
+                  loading={this.state.marketLoading}
                   stocks={this.state.stocks}
                 />
               )}
             />
-            <Route path="/orders" component={Orders} />
+            <Route
+              path="/orders"
+              render={props => (
+                <Orders
+                  {...props}
+                  loading={this.state.ordersLoading}
+                  orders={this.state.orders}
+                />
+              )}
+            />
             <Route path="/notFound" component={NotFound} />
             <Redirect path="/" exact to="/market" />
             <Redirect to="/notFound" />
