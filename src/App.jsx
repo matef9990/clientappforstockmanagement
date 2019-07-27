@@ -16,6 +16,7 @@ class App extends Component {
     ordersLoading: false,
     stocks: [],
     hubConnection: null,
+    hubConnection2: null,
     Orders: []
   };
   componentDidMount() {
@@ -25,6 +26,7 @@ class App extends Component {
 
     setInterval(async () => {
       http.patch(config.stocksEndPointUrl);
+      http.post(config.ordersEndPointUrl);
     }, 10000);
 
     const hubConnection = new HubConnectionBuilder()
@@ -42,6 +44,10 @@ class App extends Component {
         this.refreshStockPrice();
       });
     });
+  }
+
+  componentWillUnmount() {
+    clearInterval();
   }
 
   //get all Orders

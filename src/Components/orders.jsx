@@ -1,6 +1,10 @@
 import React, { Component } from "react";
+import { Link, animateScroll as scroll } from "react-scroll";
 
 class Orders extends Component {
+  componentDidUpdate() {
+    scroll.scrollToBottom({ smoth: true, duration: 2000, spy: true });
+  }
   handleBrokerOrPerson(order) {
     if (order.person == null) {
       return order.broker.name + "(broker)";
@@ -18,7 +22,7 @@ class Orders extends Component {
           <h1>
             <span className="badge badge-light">Orders Page</span>
           </h1>
-          <table className="table  table-striped">
+          <table className="table table-sm table-hover table-striped">
             <thead>
               <tr>
                 <th scope="col">Person Name</th>

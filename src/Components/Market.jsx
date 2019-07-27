@@ -1,7 +1,4 @@
 import React, { Component } from "react";
-import { HubConnection, HubConnectionBuilder } from "@aspnet/signalr";
-import http from "../Services/httpServices";
-import config from "../config.json";
 
 class Market extends Component {
   render() {
@@ -14,7 +11,7 @@ class Market extends Component {
           <h1>
             <span className="badge badge-light">Market</span>
           </h1>
-          <table className="table  table-bordered table-dark table-striped">
+          <table className="table table-sm  table-hover table-striped">
             <thead>
               <tr>
                 <th scope="col">#</th>
